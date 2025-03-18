@@ -1,6 +1,6 @@
 #include "FeatureSelect.h"
 
-double leave_one_out_cross_validation(std::vector<std::vector<double> > data, std::vector<int>& curr_set, int feature) {
+double leave_one_out_cross_validation(std::vector<std::vector<double> > data, const std::vector<int>& curr_set, int feature) {
     // reusable index variables
     int i, j, k;
 
@@ -9,6 +9,7 @@ double leave_one_out_cross_validation(std::vector<std::vector<double> > data, st
     for (int c : curr_set) {
         considering[c - 1] = true;
     }
+    considering[feature - 1] = true;
     for (i = 0; i < considering.size(); ++i) {
         if (considering[i]) continue;
         for (j = 1; j < data.size(); ++j) {
@@ -23,20 +24,11 @@ double leave_one_out_cross_validation(std::vector<std::vector<double> > data, st
         std::vector<double> curr(data[i - 1].begin() + 1, data[i - 1].end());
         label = (int)data[i - 1][0];
 
-        // std::cout << "Looping over i, at the " << i << " location" << std::endl;
-        // std::cout << "The " << i;
-        // if (i == 1) std::cout << "st";
-        // else if (i == 2) std::cout << "nd";
-        // else if (i == 3) std::cout << "rd";
-        // else std::cout << "th";
-        // std::cout << " object is in class " << label << std::endl;
-
         nearest_dist = std::numeric_limits<double>::max();
         nearest_loc = std::numeric_limits<int>::max();
         for (k = 1; k <= data.size(); ++k) {
             // skip self
             if (k == i) continue;
-            // std::cout << "Ask if " << i << " is the nearest neighbor of " << k << std::endl;
 
             // euclidean distance
             distance = 0.0;
@@ -52,8 +44,6 @@ double leave_one_out_cross_validation(std::vector<std::vector<double> > data, st
                 nearest_label = (int)data[k - 1][0];
             }
         }
-        // std::cout << "Object " << i << " is class " << label << std::endl;
-        // std::cout << "Its nearest neighbor is object " << nearest_loc << " which is in class " << nearest_label << std::endl;
 
         if (label == nearest_label) ++correct;
     }
@@ -62,45 +52,65 @@ double leave_one_out_cross_validation(std::vector<std::vector<double> > data, st
     return (double)correct / data.size();
 }
 
-void feature_search(std::vector<std::vector<double> >& data) {
+void forward_selection(const std::vector<std::vector<double> >& data) {
     // store tree
     std::vector<int> feature_set;
 
-    int i, j;
+    int i, j, k;
     std::vector<int> to_add;
-    double curr_best, accuracy;
+    double accuracy;
+    double best = 0.0;
+    bool improve = true;
+
+    std::cout << "\nThis dataset has " << data[0].size() - 1 << " features, with " << data.size() << " instances." << std::endl << std::endl;
+    std::cout << "Beginning search." << std::endl;
 
     // for each level
     for (i = 1; i < data[0].size(); ++i) {
-        std::cout << "On the " << i;
-        if (i == 1) std::cout << "st";
-        else if (i == 2) std::cout << "nd";
-        else if (i == 3) std::cout << "rd";
-        else std::cout << "th";
-        std::cout << " level of the search tree" << std::endl;
+        if (improve) std::cout << std::endl;
 
         to_add.clear();
-        curr_best = 0.0;
         // for each feature
         for (j = 1; j < data[0].size(); ++j) {
             // skip if already chosen
             if (std::find(feature_set.begin(), feature_set.begin() + i - 1, j) != feature_set.end()) continue;
 
-            // std::cout << "Considering adding the " << j;
-            // if (j == 1) std::cout << "st";
-            // else if (j == 2) std::cout << "nd";
-            // else if (j == 3) std::cout << "rd";
-            // else std::cout << "th";
-            // std::cout << " feature" << std::endl;
-
             accuracy = leave_one_out_cross_validation(data, feature_set, j);
-            if (accuracy > curr_best) {
-                curr_best = accuracy;
+
+            std::cout << "\tUsing feature(s) {" << j;
+            for (k = 0; k < feature_set.size(); ++k) {
+                std::cout << ", " << feature_set[k];
+            }
+            std::cout << "}, accuracy is " << accuracy * 100 << "%" << std::endl;
+
+            if (accuracy > best) {
+                best = accuracy;
                 to_add.push_back(j);
             }
         }
-        
+
+        if (to_add.empty() && improve)  {
+            std::cout << "\nWarning: Accuracy has decreased! Continuing in case of local maxima" << std::endl;
+            improve = false;
+            continue;
+        } else if (to_add.empty() && !improve) continue;
+        else if (!improve) improve = true;
+
         feature_set.push_back(to_add[to_add.size() - 1]);
-        std::cout << "On level " << i << ", I added feature " << to_add[to_add.size() - 1] << " to current set" << std::endl;
+
+        std::cout << "\nFeature set {";
+        for (k = 0; k < feature_set.size(); ++k) {
+            std::cout << feature_set[k];
+            if (k < feature_set.size() - 1) std::cout << ", ";
+        }
+        std::cout << "} is better, with an accuracy of " << best * 100 << "%" << std::endl;
     }
+
+    // print results
+    std::cout << "\nFinished search. The best feature subset is {";
+    for (k = 0; k < feature_set.size(); ++k) {
+        std::cout << feature_set[k];
+        if (k < feature_set.size() - 1) std::cout << ", ";
+    }
+    std::cout << "}, which has an accuracy of " << best * 100 << "%" << std::endl;
 }
