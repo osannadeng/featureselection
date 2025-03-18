@@ -9,7 +9,7 @@ double leave_one_out_cross_validation(std::vector<std::vector<double> > data, co
     for (int c : curr_set) {
         considering[c - 1] = true;
     }
-    considering[feature - 1] = true;
+    if (feature > 0) considering[feature - 1] = true;
     for (i = 0; i < considering.size(); ++i) {
         if (considering[i]) continue;
         for (j = 1; j < data.size(); ++j) {
@@ -53,12 +53,15 @@ double leave_one_out_cross_validation(std::vector<std::vector<double> > data, co
 }
 
 void forward_selection(const std::vector<std::vector<double> >& data) {
-    // store tree
-    std::vector<int> feature_set;
+    // store result
+    std::vector<int> best_set;
 
+    // recycled index variables
     int i, j, k;
+
+    std::vector<int> feature_set;
     std::vector<int> to_add;
-    double accuracy;
+    double accuracy, curr_best;
     double best = 0.0;
     bool improve = true;
 
@@ -67,9 +70,10 @@ void forward_selection(const std::vector<std::vector<double> >& data) {
 
     // for each level
     for (i = 1; i < data[0].size(); ++i) {
-        if (improve) std::cout << std::endl;
+        std::cout << std::endl;
 
         to_add.clear();
+        curr_best = 0.0;
         // for each feature
         for (j = 1; j < data[0].size(); ++j) {
             // skip if already chosen
@@ -83,34 +87,116 @@ void forward_selection(const std::vector<std::vector<double> >& data) {
             }
             std::cout << "}, accuracy is " << accuracy * 100 << "%" << std::endl;
 
-            if (accuracy > best) {
-                best = accuracy;
+            if (accuracy > curr_best) {
+                curr_best = accuracy;
                 to_add.push_back(j);
             }
         }
 
-        if (to_add.empty() && improve)  {
+        if (curr_best < best && improve)  {
             std::cout << "\nWarning: Accuracy has decreased! Continuing in case of local maxima" << std::endl;
             improve = false;
-            continue;
-        } else if (to_add.empty() && !improve) continue;
-        else if (!improve) improve = true;
+        } else improve = true;
 
         feature_set.push_back(to_add[to_add.size() - 1]);
+
+        if (curr_best > best) {
+            best = curr_best;
+            best_set = feature_set;
+        }
 
         std::cout << "\nFeature set {";
         for (k = 0; k < feature_set.size(); ++k) {
             std::cout << feature_set[k];
             if (k < feature_set.size() - 1) std::cout << ", ";
         }
-        std::cout << "} is better, with an accuracy of " << best * 100 << "%" << std::endl;
+        std::cout << "} is best, with an accuracy of " << curr_best * 100 << "%" << std::endl;
     }
 
     // print results
     std::cout << "\nFinished search. The best feature subset is {";
-    for (k = 0; k < feature_set.size(); ++k) {
-        std::cout << feature_set[k];
-        if (k < feature_set.size() - 1) std::cout << ", ";
+    for (k = 0; k < best_set.size(); ++k) {
+        std::cout << best_set[k];
+        if (k < best_set.size() - 1) std::cout << ", ";
+    }
+    std::cout << "}, which has an accuracy of " << best * 100 << "%" << std::endl;
+}
+
+// strategy: start with all features, remove least helpful until accuracy decreases
+void backward_elimination(const std::vector<std::vector<double> >& data) {
+    // store result
+    std::vector<int> best_set;
+
+    // recycled index variables
+    int i, j, k;
+
+    // populate tree
+    std::vector<int> feature_set;
+    for (i = 1; i < data[0].size(); ++i) {
+        feature_set.push_back(i);
+    }
+
+    std::vector<int> to_remove;
+    std::vector<int> exclude_j;
+    double accuracy, curr_best;
+    double best = 0.0;
+    bool improve = true;
+
+    std::cout << "\nThis dataset has " << data[0].size() - 1 << " features, with " << data.size() << " instances." << std::endl << std::endl;
+    std::cout << "Beginning search." << std::endl;
+
+    // for each level
+    for (i = 1; i < data[0].size(); ++i) {
+        if (feature_set.size() <= 1) break;
+
+        std::cout << std::endl;
+
+        to_remove.clear();
+        curr_best = 0.0;
+        // for each feature
+        for (j = 0; j < feature_set.size(); ++j) {
+            exclude_j = feature_set;
+            exclude_j.erase(exclude_j.begin() + j);
+
+            accuracy = leave_one_out_cross_validation(data, exclude_j, 0);
+
+            std::cout << "\tUsing only feature(s) {";
+            for (k = 0; k < exclude_j.size(); ++k) {
+                std::cout << ", " << exclude_j[k];
+            }
+            std::cout << "}, accuracy is " << accuracy * 100 << "%" << std::endl;
+
+            if (accuracy > curr_best) {
+                curr_best = accuracy;
+                to_remove.push_back(j);
+            }
+        }
+
+        if (curr_best < best && improve) {
+            std::cout << "\nWarning: Accuracy has decreased! Continuing in case of local maxima" << std::endl;
+            improve = false;
+        } else improve = true;
+        
+        feature_set.erase(feature_set.begin() + to_remove[to_remove.size() - 1]);
+
+        if (curr_best > best) {
+            best = curr_best;
+            best_set = feature_set;
+        }
+
+        std::cout << "\nFeature set {";
+        for (k = 0; k < feature_set.size(); ++k) {
+            std::cout << feature_set[k];
+            if (k < feature_set.size() - 1) std::cout << ", ";
+        }
+        std::cout << "} is best, with an accuracy of " << curr_best * 100 << "%" << std::endl;
+    }
+
+    // print results
+    std::cout << "\nFinished search. The best feature subset is {";
+    for (k = 0; k < best_set.size(); ++k) {
+        std::cout << best_set[k];
+        if (k < best_set.size() - 1) std::cout << ", ";
     }
     std::cout << "}, which has an accuracy of " << best * 100 << "%" << std::endl;
 }

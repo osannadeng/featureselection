@@ -15,7 +15,8 @@ int main() {
     std::cout << "\t(1) Small Dataset 2" << std::endl;
     std::cout << "\t(2) Small Dataset 43" << std::endl;
     std::cout << "\t(3) Large Dataset 2" << std::endl;
-    std::cout << "\t(4) Large Dataset 17" << std::endl;
+    std::cout << "\t(4) Large Dataset 12" << std::endl;
+    std::cout << "\t(5) Large Dataset 17" << std::endl;
 
     std::cin >> testopt;
     std::cout << "Type the number of the algorithm to run:" << std::endl;
@@ -23,22 +24,29 @@ int main() {
     std::cout << "\t(2) Backward Elimination" << std::endl;
     std::cin >> algoopt;
 
+    std::cout << std::endl;
+
     std::vector<std::vector<double> > data;
 
     // parse dataset option
     if (testopt == 1) parse(data, "datasets/CS170_Small_Data__2.txt");
     else if (testopt == 2) parse(data, "datasets/CS170_Small_Data__43.txt");
     else if (testopt == 3) parse(data, "datasets/CS170_Large_Data__2.txt");
-    else if (testopt == 4) parse(data, "datasets/CS170_Large_Data__17.txt"); 
+    else if (testopt == 4) parse(data, "datasets/CS170_Large_Data__12.txt"); 
+    else if (testopt == 5) parse(data, "datasets/CS170_Large_Data__17.txt"); 
     else {
         std::cout << "Invalid option." << std::endl;
         return 1;
     }
 
     // run algorithm
-    if (algoopt == 1) forward_selection(data);
-    else if (algoopt == 2) std::cout << "In progress..." << std::endl;
-    else {
+    if (algoopt == 1) {
+        std::cout << "Running Forward Selection..." << std::endl;
+        forward_selection(data);
+    } else if (algoopt == 2) {
+        std::cout << "Running Backward Elimination..." << std::endl;
+        backward_elimination(data);
+    } else {
         std::cout << "Invalid option." << std::endl;
         return 1;
     }
