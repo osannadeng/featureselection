@@ -59,13 +59,8 @@ double base_accuracy(const std::vector<std::vector<double> >& data) {
     for (unsigned i = 0; i < data.size(); ++i) {
         if ((int)data[i][0] == 1) ++count;
     }
-    if (count > data.size() - count) {
-        std::cout << "Base accuracy (no features) is " << (double)count / data.size() * 100 << "%, where option 1 is always guessed." << std::endl;
-        return (double)count / data.size();
-    } else {
-        std::cout << "Base accuracy (no features) is " << (double)count / data.size() * 100 << "%, where option 2 is always guessed." << std::endl;
-        return (data.size() - (double)count) / data.size();
-    }
+    if (count > data.size() - count) return (double)count / data.size();
+    else return (data.size() - (double)count) / data.size();
 }
 
 void forward_selection(const std::vector<std::vector<double> >& data) {
@@ -79,7 +74,17 @@ void forward_selection(const std::vector<std::vector<double> >& data) {
     std::vector<int> to_add;
     double accuracy, curr_best;
 
-    std::cout << "\nThis dataset has " << data[0].size() - 1 << " features, with " << data.size() << " instances." << std::endl << std::endl;
+    std::cout << "This dataset has " << data[0].size() - 1 << " features (not including the class attribute), with " << data.size() << " instances." << std::endl;
+
+    // populate tree for evaluation of all features
+    for (i = 1; i < data[0].size(); ++i) {
+        feature_set.push_back(i);
+    }
+    
+    std::cout << "Running nearest neighbor with all " << data[0].size() - 1 << " features, using \"leaving-one-out\" evaluation, I get an accuracy of " << leave_one_out_cross_validation(data, feature_set, 0) * 100 << "%" << std::endl;
+
+    feature_set.clear();
+
     std::cout << "Beginning search." << std::endl;
 
     double best = base_accuracy(data);
@@ -87,10 +92,9 @@ void forward_selection(const std::vector<std::vector<double> >& data) {
 
     // for each level
     for (i = 1; i < data[0].size(); ++i) {
-        std::cout << std::endl;
-
         to_add.clear();
         curr_best = 0.0;
+
         // for each feature
         for (j = 1; j < data[0].size(); ++j) {
             // skip if already chosen
@@ -110,7 +114,7 @@ void forward_selection(const std::vector<std::vector<double> >& data) {
             }
         }
 
-        if (curr_best < best)  std::cout << "\nWarning: Accuracy has decreased! Continuing in case of local maxima" << std::endl;
+        if (curr_best < best)  std::cout << "Warning: Accuracy has decreased! Continuing in case of local maxima" << std::endl;
 
         feature_set.push_back(to_add[to_add.size() - 1]);
 
@@ -120,20 +124,20 @@ void forward_selection(const std::vector<std::vector<double> >& data) {
             changed = true;
         }
 
-        std::cout << "\nFeature set {";
+        std::cout << "Feature set {";
         for (k = 0; k < feature_set.size(); ++k) {
             std::cout << feature_set[k];
             if (k < feature_set.size() - 1) std::cout << ", ";
         }
-        std::cout << "} is best, with an accuracy of " << curr_best * 100 << "%" << std::endl;
+        std::cout << "} was best, accuracy is " << curr_best * 100 << "%" << std::endl;
     }
 
     // print results
     if (!changed) {
-        std::cout << "\nFinished search. No features improved accuracy. The base accuracy is: " << best * 100 << "%" << std::endl;
+        std::cout << "Finished search!! No features improved accuracy. The base accuracy is: " << best * 100 << "%" << std::endl;
         return;
     }
-    std::cout << "\nFinished search. The best feature subset is {";
+    std::cout << "Finished search!! The best feature subset is {";
     for (k = 0; k < best_set.size(); ++k) {
         std::cout << best_set[k];
         if (k < best_set.size() - 1) std::cout << ", ";
@@ -159,7 +163,10 @@ void backward_elimination(const std::vector<std::vector<double> >& data) {
     std::vector<int> exclude_j;
     double accuracy, curr_best;
 
-    std::cout << "\nThis dataset has " << data[0].size() - 1 << " features, with " << data.size() << " instances." << std::endl << std::endl;
+    std::cout << "This dataset has " << data[0].size() - 1 << " features (not including the class attribute), with " << data.size() << " instances." << std::endl;
+
+    std::cout << "Running nearest neighbor with all " << data[0].size() - 1 << " features, using \"leaving-one-out\" evaluation, I get an accuracy of " << leave_one_out_cross_validation(data, feature_set, 0) * 100 << "%" << std::endl;
+
     std::cout << "Beginning search." << std::endl;
 
     double best = base_accuracy(data);
@@ -169,10 +176,9 @@ void backward_elimination(const std::vector<std::vector<double> >& data) {
     for (i = 1; i < data[0].size(); ++i) {
         if (feature_set.size() <= 1) break;
 
-        std::cout << std::endl;
-
         to_remove.clear();
         curr_best = 0.0;
+        
         // for each feature
         for (j = 0; j < feature_set.size(); ++j) {
             exclude_j = feature_set;
@@ -208,15 +214,15 @@ void backward_elimination(const std::vector<std::vector<double> >& data) {
             std::cout << feature_set[k];
             if (k < feature_set.size() - 1) std::cout << ", ";
         }
-        std::cout << "} is best, with an accuracy of " << curr_best * 100 << "%" << std::endl;
+        std::cout << "} was best, accuracy is " << curr_best * 100 << "%" << std::endl;
     }
 
     // print results
     if (!changed) {
-        std::cout << "\nFinished search. No features improved accuracy. The base accuracy is: " << best * 100 << "%" << std::endl;
+        std::cout << "Finished search. No features improved accuracy. The base accuracy is: " << best * 100 << "%" << std::endl;
         return;
     }
-    std::cout << "\nFinished search. The best feature subset is {";
+    std::cout << "Finished search. The best feature subset is {";
     for (k = 0; k < best_set.size(); ++k) {
         std::cout << best_set[k];
         if (k < best_set.size() - 1) std::cout << ", ";
