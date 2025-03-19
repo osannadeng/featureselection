@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "FeatureSelect.h"
 
 double leave_one_out_cross_validation(std::vector<std::vector<double> > data, const std::vector<int>& curr_set, int feature) {
@@ -76,7 +78,6 @@ void forward_selection(const std::vector<std::vector<double> >& data) {
     std::vector<int> feature_set;
     std::vector<int> to_add;
     double accuracy, curr_best;
-    bool improve = true;
 
     std::cout << "\nThis dataset has " << data[0].size() - 1 << " features, with " << data.size() << " instances." << std::endl << std::endl;
     std::cout << "Beginning search." << std::endl;
@@ -109,10 +110,7 @@ void forward_selection(const std::vector<std::vector<double> >& data) {
             }
         }
 
-        if (curr_best < best && improve)  {
-            std::cout << "\nWarning: Accuracy has decreased! Continuing in case of local maxima" << std::endl;
-            improve = false;
-        } else improve = true;
+        if (curr_best < best)  std::cout << "\nWarning: Accuracy has decreased! Continuing in case of local maxima" << std::endl;
 
         feature_set.push_back(to_add[to_add.size() - 1]);
 
@@ -160,7 +158,6 @@ void backward_elimination(const std::vector<std::vector<double> >& data) {
     std::vector<int> to_remove;
     std::vector<int> exclude_j;
     double accuracy, curr_best;
-    bool improve = true;
 
     std::cout << "\nThis dataset has " << data[0].size() - 1 << " features, with " << data.size() << " instances." << std::endl << std::endl;
     std::cout << "Beginning search." << std::endl;
@@ -196,10 +193,7 @@ void backward_elimination(const std::vector<std::vector<double> >& data) {
             }
         }
 
-        if (curr_best < best && improve) {
-            std::cout << "\nWarning: Accuracy has decreased! Continuing in case of local maxima" << std::endl;
-            improve = false;
-        } else improve = true;
+        if (curr_best < best) std::cout << "\nWarning: Accuracy has decreased! Continuing in case of local maxima" << std::endl;
         
         feature_set.erase(feature_set.begin() + to_remove[to_remove.size() - 1]);
 
