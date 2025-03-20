@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+// #include <chrono>
 
 #include "FeatureSelect.h"
 
@@ -28,12 +29,16 @@ int main() {
     parse(data, "datasets/" + filename);
 
     // run algorithm
+    // auto start_time = std::chrono::high_resolution_clock::now();
     if (algoopt == 1) forward_selection(data);
     else if (algoopt == 2) backward_elimination(data);
     else {
         std::cout << "Invalid option." << std::endl;
         return 1;
     }
+    // auto end_time = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> elapsed = end_time - start_time;
+    // std::cout << "Elapsed time: " << elapsed.count() << " seconds" << std::endl;
 
     return 0;
 }
