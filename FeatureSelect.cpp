@@ -1,4 +1,5 @@
 #include <iostream>
+#include <map>
 
 #include "FeatureSelect.h"
 
@@ -55,12 +56,17 @@ double leave_one_out_cross_validation(std::vector<std::vector<double> > data, co
 }
 
 double base_accuracy(const std::vector<std::vector<double> >& data) {
-    int count = 0;
+    std::map<int, int> labels;
     for (unsigned i = 0; i < data.size(); ++i) {
-        if ((int)data[i][0] == 1) ++count;
+        ++labels[(int)data[i][0]];
     }
-    if (count > data.size() - count) return (double)count / data.size();
-    else return (data.size() - (double)count) / data.size();
+    int max = 0;
+    for (auto l : labels) {
+        if (l.second > max) {
+            max = l.second;
+        }
+    }
+    return (double)max / data.size();
 }
 
 void forward_selection(const std::vector<std::vector<double> >& data) {
