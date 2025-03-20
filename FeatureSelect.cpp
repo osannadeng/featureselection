@@ -87,7 +87,10 @@ void forward_selection(const std::vector<std::vector<double> >& data) {
 
     std::cout << "Beginning search." << std::endl;
 
+    // empty subset
     double best = base_accuracy(data);
+    std::cout << "\tUsing only feature(s) {}, accuracy is " << best * 100 << "%" << std::endl;
+    std::cout << "Feature set {} was best, accuracy is " << best * 100 << "%" << std::endl;
     bool changed = false;
 
     // for each level
@@ -169,8 +172,20 @@ void backward_elimination(const std::vector<std::vector<double> >& data) {
 
     std::cout << "Beginning search." << std::endl;
 
-    double best = base_accuracy(data);
-    bool changed = false;
+    // full set
+    double best = leave_one_out_cross_validation(data, feature_set, 0);
+    std::cout << "\tUsing only feature(s) {";
+    for (i = 1; i < data[0].size(); ++i) {
+        std::cout << i;
+        if (i < data[0].size() - 1) std::cout << ", ";
+    }
+    std::cout << "}, accuracy is " << best * 100 << "%" << std::endl;
+    std::cout << "Feature set {";
+    for (i = 1; i < data[0].size(); ++i) {
+        std::cout << i;
+        if (i < data[0].size() - 1) std::cout << ", ";
+    }
+    std::cout << "} was best, accuracy is " << best * 100 << "%" << std::endl;
 
     // for each level
     for (i = 1; i < data[0].size(); ++i) {
@@ -199,17 +214,16 @@ void backward_elimination(const std::vector<std::vector<double> >& data) {
             }
         }
 
-        if (curr_best < best) std::cout << "\nWarning: Accuracy has decreased! Continuing in case of local maxima" << std::endl;
+        if (curr_best < best) std::cout << "Warning: Accuracy has decreased! Continuing in case of local maxima" << std::endl;
         
         feature_set.erase(feature_set.begin() + to_remove[to_remove.size() - 1]);
 
         if (curr_best > best) {
             best = curr_best;
             best_set = feature_set;
-            changed = true;
         }
 
-        std::cout << "\nFeature set {";
+        std::cout << "Feature set {";
         for (k = 0; k < feature_set.size(); ++k) {
             std::cout << feature_set[k];
             if (k < feature_set.size() - 1) std::cout << ", ";
@@ -217,11 +231,16 @@ void backward_elimination(const std::vector<std::vector<double> >& data) {
         std::cout << "} was best, accuracy is " << curr_best * 100 << "%" << std::endl;
     }
 
-    // print results
-    if (!changed) {
+    // empty subset
+    accuracy = base_accuracy(data);
+    std::cout << "\tUsing only feature(s) {}, accuracy is " << accuracy * 100 << "%" << std::endl;
+    std::cout << "Feature set {} was best, accuracy is " << accuracy * 100 << "%" << std::endl;
+    if (accuracy > best) {
+        best = accuracy;
         std::cout << "Finished search. No features improved accuracy. The base accuracy is: " << best * 100 << "%" << std::endl;
         return;
     }
+
     std::cout << "Finished search. The best feature subset is {";
     for (k = 0; k < best_set.size(); ++k) {
         std::cout << best_set[k];
